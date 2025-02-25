@@ -1,112 +1,91 @@
-# Vue Project with SSE
+Vue Project with SSE Using SharedWorker
+=======================================
 
-This project is a Vue application that uses Server-Sent Events (SSE) to receive real-time notifications. The main goal of the project is to provide a way to manage SSE in Vue with performance and clean management, using a backend with multiple routes to notify the frontend. The application consists of a Vue user interface and a Node.js server that sends notifications via SSE.
+This project is a Vue application that uses Server-Sent Events (SSE) via a SharedWorker to efficiently receive real-time notifications across multiple tabs. The main goal of the project is to provide a way to manage SSE connections in Vue with enhanced performance and clean management, using a single shared connection for multiple tabs/windows and a backend with multiple routes to notify the frontend. The application consists of a Vue user interface and a Node.js server that sends notifications via SSE.
 
-## Project Structure
+Project Structure
+-----------------
 
-- `src/`: Contains the Vue application source code.
-    - `App.vue`: Main application component.
-    - `router/index.ts`: Application routes configuration.
-    - `views/`: Contains the application views (`ChatView.vue` and `NotificationsView.vue`).
-    - `composables/useSSE.ts`: Composable to manage SSE connections.
-    - `services/SSEConnectionManager.ts`: Class to manage SSE connections.
-- `node-sse-server/`: Contains the Node.js server code.
-    - `src/index.ts`: Server code that manages SSE connections and sends notifications.
+* `src/`: Contains the Vue application source code.
+  * `App.vue`: Main application component with global connection status.
+  * `router/index.ts`: Application routes configuration.
+  * `views/`: Contains the application views (`ChatView.vue` and `NotificationsView.vue`).
+  * `composables/useSSE.ts`: Composable to manage SSE connections via SharedWorker.
+  * `public/sharedWorker.js`: SharedWorker script that maintains SSE connections.
+* `node-sse-server/`: Contains the Node.js server code.
+  * `src/index.ts`: Server code that manages SSE connections and sends notifications.
 
-## Prerequisites
+Prerequisites
+-------------
 
-- Node.js (version 14 or higher)
-- npm (version 6 or higher)
+* Node.js (version 14 or higher)
+* npm (version 6 or higher)
+* Browser with SharedWorker support (Chrome, Firefox, Edge)
 
-## Installation
+Installation
+------------
 
-1. Clone the repository:
-   ```sh
-   git clone <REPOSITORY_URL>
-   cd <REPOSITORY_NAME>
-   ```
+1. Clone the repository:   
+   `git clone <REPOSITORY_URL> cd <REPOSITORY_NAME>`
 
-2. Install project dependencies:
-   ```sh
-   npm install
-   ```
+2. Install project dependencies:   
+   `npm install`
 
-3. Install server dependencies:
-   ```sh
-   cd node-sse-server
-   npm install
-   cd ..
-   ```
+3. Install server dependencies:   
+   `cd node-sse-server npm install cd ..`
 
-## Running the Application
+Running the Application
+-----------------------
 
-1. Start the Node.js server:
-   ```sh
-   cd node-sse-server
-   npm start
-   ```
+1. Start the Node.js server:   
+   `cd node-sse-server npm start`
 
-2. In another terminal window, start the Vue application:
-   ```sh
-   npm run dev
-   ```
+2. In another terminal window, start the Vue application:   
+   `npm run dev`
 
 3. Open your browser and go to `http://localhost:3000` to see the application running.
 
-## File Structure
+Key Components
+--------------
 
 ### `src/App.vue`
 
-This file contains the main Vue application component, which includes route configuration and logic to connect to the SSE endpoint `/api/main/updates`.
-
-### `src/router/index.ts`
-
-This file configures the application routes, including the `NotificationsView.vue` and `ChatView.vue` views.
+This file contains the main Vue application component, which includes route configuration and a global connection status indicator. It connects to the SSE endpoint `/api/main/updates` via the SharedWorker and displays connection status in the navigation bar.
 
 ### `src/views/ChatView.vue`
 
-This file contains the chat view, which connects to the SSE endpoint `/api/chat/messages` to receive real-time messages.
+This file contains the chat view, which receives real-time messages from the SSE endpoint `/api/chat/messages` through the SharedWorker. It displays messages in a chronological list and shows connection status.
 
 ### `src/views/NotificationsView.vue`
 
-This file contains the notifications view, which connects to the SSE endpoints `/api/notifications/system` and `/api/notifications/user` to receive real-time notifications.
+This file contains the notifications view, which receives real-time notifications from the SSE endpoints `/api/notifications/system` and `/api/notifications/user` through the SharedWorker. It displays notifications in a prioritized list and shows connection status for each source.
 
 ### `src/composables/useSSE.ts`
 
-This file defines a composable to manage SSE connections, including functions to connect, disconnect, and monitor connection status.
+This file defines a composable to manage SSE connections via the SharedWorker, including functions to:
 
-### `src/services/SSEConnectionManager.ts`
+* Connect to SSE endpoints
+* Disconnect from SSE endpoints
+* Monitor connection status
+* Share connection status between components/tabs
+* Register message handlers
 
-This file contains the `SSEConnectionManager` class, which manages SSE connections with automatic reconnection.
+### `public/sharedWorker.js`
 
-### `node-sse-server/src/index.ts`
+This file contains the SharedWorker script that:
 
-This file contains the Node.js server code, which manages SSE connections and sends notifications to the configured endpoints.
+* Maintains SSE connections for all tabs/windows
+* Handles automatic reconnection with exponential backoff
+* Implements heartbeat mechanism to detect disconnections
+* Broadcasts SSE messages to all connected clients
+* Provides connection status updates
 
-## Testing Notifications
+Benefits of Using SharedWorker
+------------------------------
 
-You can test sending notifications using the test routes configured on the server:
+* **Reduced Server Load**: Only one SSE connection per endpoint is established, even with multiple tabs open
+* **Shared Connection State**: Connection status is synchronized across tabs/windows
+* **Efficient Resource Usage**: Fewer network connections and better memory usage
+* **Consistent Message Delivery**: All tabs receive the same messages without duplication
+* **Persistent Connections**: The SharedWorker maintains connections even when some tabs are inactive
 
-- Send a system notification:
-  ```sh
-  curl -X POST http://localhost:3000/api/test/system -H "Content-Type: application/json" -d '{"message": "System notification test"}'
-  ```
-
-- Send a user notification:
-  ```sh
-  curl -X POST http://localhost:3000/api/test/user -H "Content-Type: application/json" -d '{"message": "User notification test"}'
-  ```
-
-- Send a chat message:
-  ```sh
-  curl -X POST http://localhost:3000/api/test/chat -H "Content-Type: application/json" -d '{"user": "Test", "text": "Test message"}'
-  ```
-
-- Send a main notification:
-  ```sh
-  curl -X POST http://localhost:3000/api/test/main -H "Content-Type: application/json" -d '{"message": "Main notification test"}'
-  ```
-
-## License
-
-This project is licensed under the MIT License. See the `LICENSE` file for more details.
