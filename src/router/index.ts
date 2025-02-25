@@ -1,25 +1,26 @@
-import { createRouter, createWebHistory } from 'vue-router';
-import NotificationsView from '@/views/NotificationsView.vue';
-import ChatView from '@/views/ChatView.vue';
+import { createRouter, createWebHistory } from 'vue-router'
+import type { RouteRecordRaw } from 'vue-router'
+
+const routes: RouteRecordRaw[] = [
+  {
+    path: '/',
+    redirect: '/notifications'
+  },
+  {
+    path: '/notifications',
+    name: 'notifications',
+    component: () => import('../views/NotificationsView.vue')
+  },
+  {
+    path: '/chat',
+    name: 'chat',
+    component: () => import('../views/ChatView.vue')
+  }
+]
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
-  routes: [
-    {
-      path: '/',
-      redirect: '/notifications'
-    },
-    {
-      path: '/notifications',
-      name: 'notifications',
-      component: NotificationsView
-    },
-    {
-      path: '/chat',
-      name: 'chat',
-      component: ChatView
-    }
-  ]
-});
+  routes
+})
 
-export default router;
+export default router
